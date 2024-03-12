@@ -18,7 +18,7 @@ from scipy.spatial.distance import cdist, pdist, squareform
 from skimage.transform import rescale, resize
 import argparse
 import tifffile
-#from tiatoolbox.wsicore.wsireader import WSIReader
+from tiatoolbox.wsicore import WSIReader
 import time
 
 ## App description
@@ -85,6 +85,12 @@ if (img_file_buffer_ur is not None) & (img_file_buffer_lr is not None) & (img_fi
         histo_fragment_ul = histo_fragment_ul
 
     images_original = [histo_fragment_ur, histo_fragment_lr, histo_fragment_ll, histo_fragment_ul]
+
+    original_spacing = st.slider("Original image spacing (micrometers):", 0.0, 1.0, 0.25)
+    level = st.slider("Downsampling level:", 0, 10, 5)
+    out_path = st.text_input("Insert file path (e.g. /Users/username/Documents/folder/):", "")
+    sub_bound_x = st.slider("Value to subtract from x boundary of output image:", 0, 1000, 550)
+    sub_bound_y = st.slider("Value to subtract from y boundary of output image:", 0, 1000, 550)
 
     # Downsample the images
     DOWNSAMPLE_LEVEL = 4  # avoid running the optimization for the entire image
@@ -577,27 +583,29 @@ if (img_file_buffer_ur is not None) & (img_file_buffer_lr is not None) & (img_fi
         st.sidebar.image(output, caption="Stitching output", use_column_width=True)
         #imageio.imwrite("/Users/anacastroverde/Desktop/output_black.tif", output, format="tif")
 
-        # reader = WSIReader.open(output)
-        # info_dict = reader.info.as_dict()
-        # bounds = [0, 0, info_dict['level_dimensions'][0][0] - int(args.sub_bound_x),
-        #           info_dict['level_dimensions'][0][1] - int(
-        #               args.sub_bound_y)]  # y-550 #To remove the excessive white space around the output image
-        # region = reader.read_bounds(bounds, resolution=0, units="level", coord_space="resolution")
+        reader = WSIReader.open(output)
+        info_dict = reader.info.as_dict()
+        bounds = [0, 0, info_dict['level_dimensions'][0][0] - int(sub_bound_x),
+                  info_dict['level_dimensions'][0][1] - int(
+                       sub_bound_y)]  # y-550 #To remove the excessive white space around the output image
+        region = reader.read_bounds(bounds, resolution=0, units="level", coord_space="resolution")
         #
-        # original_spacing = (float(args.original_spacing), float(args.original_spacing))
+        #original_spacing = (float(args.original_spacing), float(args.original_spacing))
         # # new_spacing_x = original_size[0]*original_spacing[0]/new_size[0]
         # # new_spacing_y = original_size[1]*original_spacing[1]/new_size[1]
-        # new_spacing = (2 ** int(args.level)) * original_spacing[0]  # *(10**(-3))
+        new_spacing = (2 ** int(level)) * float(original_spacing)  # *(10**(-3))
         #
-        # tifffile.imwrite(args.output_path + "output.tif", np.array(region), photometric='rgb', imagej=True,
-        #                  resolution=(1 / new_spacing, 1 / new_spacing), metadata={'spacing': new_spacing, 'unit': 'um'})
+        tifffile.imwrite(out_path + "output.tif", np.array(region), photometric='rgb', imagej=True,
+                         resolution=(1 / new_spacing, 1 / new_spacing), metadata={'spacing': new_spacing, 'unit': 'um'})
         # # imageio.imwrite(args.output_path+"output.tif", output, format="tif")
 
-        #average_euclidean_distance_mm = average_euclidean_distance_units * new_spacing * (10 ** (-3))
+        average_euclidean_distance_mm = average_euclidean_distance_units * new_spacing * (10 ** (-3))
         #print('Average Euclidean Distance between corner points:', round(average_euclidean_distance_mm, 2),
               #'millimeters')
 
         end_time = time.time()
         elapsed_time = end_time - start_time
-        print('Total execution time of algorithm:', round(elapsed_time, 2), 'seconds')
+        st.sidebar.metric(label="Average Euclidean Distance (mm)", value=round(average_euclidean_distance_mm, 2), delta=None)
+        st.sidebar.metric(label="Total execution time (s)", value=round(elapsed_time, 2), delta=None)
+        #print('Total execution time of algorithm:', round(elapsed_time, 2), 'seconds')
 
