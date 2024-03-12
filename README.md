@@ -1,10 +1,11 @@
 # StitchPro
 Python app for reconstruction of tissue quadrants into a complete pseudo-whole-mount histopathology prostate section.
 
-This repository includes the Python algorithm developed for stitching of prostate quadrants into an entire prostate section. Our algorithm is based in three main steps - boundary detection, histogram matching, and differential evolution optimization - and is intuitive to run as a Streamlit application, keeping the user input to a minimum who only needs to provide as arguments the tissue fragments to be reconstructed.
+This repository includes the Python algorithm developed for stitching of prostate quadrants into an entire prostate section and a folder with four test histopathology prostate quadrants digitized at the Champalimaud Clinical Center. Our algorithm is based in three main steps - boundary detection, histogram matching, and differential evolution optimization - and is intuitive to run as a Streamlit application, keeping the user input to a minimum who only needs to provide as arguments the tissue fragments to be reconstructed.
  
 ### Repository Structure
 - StitchPro.py: Python algorithm for stitching.
+- test-data: Folder containing the required image quadrants labeled as ur (upper-right), lr (lower-right), ll (lower-left), ul (upper-left).
 - requirements.txt: Text file with the necessary Python packages for this algorithm.
 
 ### Compatibility
